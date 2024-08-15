@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MentorConnect.Client", "MentorConnect.Client\MentorConnect.Client.csproj", "{4F63EC21-4349-4C44-8E5F-F4ACFB4F1FB3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MentorConnect.Web", "MentorConnect.Web\MentorConnect.Web.csproj", "{68132684-6007-44CE-95AB-1F39318F1DE6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5104BCF5-3A5B-43D7-AD2F-BE2BD09A9168}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MentorConnect.Shared", "MentorConnect.Shared\MentorConnect.Shared.csproj", "{3C44EE20-C77C-404D-B59D-B47AC82C305F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MentorConnect.Data", "MentorConnect.Data\MentorConnect.Data.csproj", "{0CA42AD1-25B9-4728-8566-386562482860}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F63EC21-4349-4C44-8E5F-F4ACFB4F1FB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F63EC21-4349-4C44-8E5F-F4ACFB4F1FB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F63EC21-4349-4C44-8E5F-F4ACFB4F1FB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F63EC21-4349-4C44-8E5F-F4ACFB4F1FB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68132684-6007-44CE-95AB-1F39318F1DE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68132684-6007-44CE-95AB-1F39318F1DE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68132684-6007-44CE-95AB-1F39318F1DE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68132684-6007-44CE-95AB-1F39318F1DE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C44EE20-C77C-404D-B59D-B47AC82C305F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C44EE20-C77C-404D-B59D-B47AC82C305F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C44EE20-C77C-404D-B59D-B47AC82C305F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C44EE20-C77C-404D-B59D-B47AC82C305F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CA42AD1-25B9-4728-8566-386562482860}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CA42AD1-25B9-4728-8566-386562482860}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CA42AD1-25B9-4728-8566-386562482860}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CA42AD1-25B9-4728-8566-386562482860}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

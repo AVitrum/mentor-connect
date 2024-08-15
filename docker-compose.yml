@@ -1,0 +1,6 @@
+﻿services:
+  mentorconnect.web:
+    image: mentorconnect.web
+    build:
+      context: .
+      dockerfile: MentorConnect.Web/Dockerfile
