@@ -1,4 +1,5 @@
 using MentorConnect.Web.Configurations;
+using MentorConnect.Web.Filters;
 using MentorConnect.Web.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,8 +10,7 @@ builder.Services.AddDatabaseConfiguration(builder.Configuration);
 builder.Services.AddIdentityConfiguration(builder.Configuration);
 builder.Services.AddMemoryCache();
 builder.Services.AddSession();
-
-builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.None);
+builder.Logging.AddLogsFilter();
 
 var app = builder.Build();
 

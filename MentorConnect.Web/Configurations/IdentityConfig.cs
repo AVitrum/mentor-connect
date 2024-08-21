@@ -10,7 +10,7 @@ public static class IdentityConfig
 {
     public static void AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDefaultIdentity<ApplicationUser>().AddEntityFrameworkStores<ApplicationDbContext>();
+        services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
 
         services.AddAuthentication(options =>
             {

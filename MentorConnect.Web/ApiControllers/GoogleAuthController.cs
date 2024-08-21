@@ -11,14 +11,14 @@ using Microsoft.IdentityModel.Tokens;
 namespace MentorConnect.Web.ApiControllers;
 
 [ApiController]
-[Route("GoogleLogin")]
-public class AccountController : ControllerBase
+[Route("server/[controller]")]
+public class GoogleAuthController : ControllerBase
 {
     private readonly IConfiguration _configuration;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public AccountController(
+    public GoogleAuthController(
         IConfiguration configuration,
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager)
@@ -34,12 +34,13 @@ public class AccountController : ControllerBase
             GoogleDefaults.AuthenticationScheme,
             new AuthenticationProperties
             {
-                RedirectUri = "/GoogleLogin/GoogleResponse"
+                RedirectUri = "/server/googleAuth/googleResponse"
             });
     }
 
-    [HttpGet("GoogleResponse")]
-    public async Task<IActionResult> GoogleLogin()
+    //TODO: Move logic to a service
+    [HttpGet("googleResponse")]
+    public async Task<IActionResult> GoogleResponse()
     {
         var authenticateResult = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
         if (!authenticateResult.Succeeded)
@@ -48,25 +49,45 @@ public class AccountController : ControllerBase
         }
 
         var email = authenticateResult.Principal.FindFirst(ClaimTypes.Email)?.Value;
-        if (email == null)
+        if (email is null)
         {
             return BadRequest("Email claim not found");
         }
 
         var user = await _userManager.FindByEmailAsync(email);
-        if (user == null)
+        if (user is null)
         {
-            return BadRequest("User not found");
+            var newUser = new ApplicationUser
+            {
+                Email = email,
+                UserName = email,
+                EmailConfirmed = true,
+                NormalizedEmail = email.ToUpper(),
+                NormalizedUserName = email.ToUpper(),
+            };
+            
+            await _userManager.CreateAsync(newUser);
+            
+            user = await _userManager.FindByEmailAsync(email);
+            await _signInManager.SignInAsync(user!, isPersistent: false);
+            
+            return RedirectToAction("AddPassword", "Account");
+        }
+
+        if (user.PasswordHash is null)
+        {
+            await _signInManager.SignInAsync(user!, isPersistent: false);
+            return RedirectToAction("AddPassword", "Account");
         }
 
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("superSecretKey@345superSecretKey@345"));
+            
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:IssuerSigningKey"] ?? string.Empty));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
@@ -86,7 +107,6 @@ public class AccountController : ControllerBase
         });
 
         await _signInManager.SignInAsync(user, isPersistent: false);
-
         return RedirectToAction("Privacy", "Home");
     }
 }
