@@ -1,5 +1,6 @@
 using MentorConnect.Data.Entities;
 using MentorConnect.Shared.Enums;
+using MentorConnect.Shared.Exceptions;
 using MentorConnect.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -10,24 +11,52 @@ namespace MentorConnect.Web.Controllers;
 
 public class AccountController : Controller
 {
+    private readonly ILogger<AccountController> _logger;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly RoleManager<IdentityRole> _roleManager;
 
-    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager, IHttpContextAccessor httpContextAccessor)
+    public AccountController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        RoleManager<IdentityRole> roleManager,
+        IHttpContextAccessor httpContextAccessor,
+        ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
+        _logger = logger;
     }
     
+    //GET: /Account/Profile
+    [Authorize]
+    public async Task<IActionResult> Profile()
+    {
+        ApplicationUser? user = await _userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            TempData["Error"] = "User not found.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        ProfileViewModel response = new ProfileViewModel
+        {
+            Email = user.Email ?? throw new EntityNotFoundException<ApplicationUser>(),
+            Username = user.UserName ?? throw new EntityNotFoundException<ApplicationUser>(),
+            EmailConfirmed = user.EmailConfirmed,
+            PhoneNumber = user.PhoneNumber
+        };
+        return View(response);
+    }
+
     // GET: /Account/Login
     public IActionResult Login()
     {
-        var response = new LoginViewModel();
+        LoginViewModel response = new LoginViewModel();
         return View(response);
     }
-    
+
     // POST: /Account/Login
     [HttpPost]
     public async Task<IActionResult> Login(LoginViewModel model)
@@ -36,7 +65,7 @@ public class AccountController : Controller
         {
             return View(model);
         }
-        
+
         ApplicationUser? user = await _userManager.FindByEmailAsync(model.EmailAddress);
 
         if (user is null)
@@ -44,14 +73,14 @@ public class AccountController : Controller
             TempData["Error"] = "Wrong email or password. Please try again.";
             return View(model);
         }
-        
+
         bool passwordMatch = await _userManager.CheckPasswordAsync(user, model.Password);
         if (!passwordMatch)
         {
             TempData["Error"] = "Wrong email or password. Please try again.";
             return View(model);
         }
-        
+
         SignInResult result = await _signInManager.PasswordSignInAsync(
             user, model.Password, false, false);
         if (result.Succeeded)
@@ -59,18 +88,18 @@ public class AccountController : Controller
             //TODO: Redirect to the user's profile
             return RedirectToAction("Privacy", "Home");
         }
-        
+
         TempData["Error"] = "Invalid login attempt.";
         return View(model);
     }
-    
+
     // GET: /Account/Register
     public IActionResult Register()
     {
-        var response = new RegisterViewModel();
+        RegisterViewModel response = new RegisterViewModel();
         return View(response);
     }
-    
+
     // POST: /Account/Register
     [HttpPost]
     public async Task<IActionResult> Register(RegisterViewModel model)
@@ -95,12 +124,12 @@ public class AccountController : Controller
         IdentityResult creationResult = await _userManager.CreateAsync(user, model.Password);
         if (creationResult.Succeeded)
         {
-            var roleExists = await _roleManager.RoleExistsAsync(UserRoles.User);
+            bool roleExists = await _roleManager.RoleExistsAsync(UserRoles.User);
             if (!roleExists)
             {
                 await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
             }
-            
+
             await _userManager.AddToRoleAsync(user, UserRoles.User);
         }
 
@@ -112,10 +141,17 @@ public class AccountController : Controller
     public async Task<IActionResult> AddPassword()
     {
         ApplicationUser? user = await _userManager.GetUserAsync(User);
-        var response = new ChangePasswordViewModel { AppUserId = user!.Id };
+        if (user is null) 
+        {
+            TempData["Error"] = "User not found.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        _logger.LogInformation($"User: {user.Id} found");
+        ChangePasswordViewModel response = new ChangePasswordViewModel { AppUserId = user.Id };
         return View(response);
     }
-    
+
     // POST: /Account/ChangePassword
     [HttpPost]
     [Authorize]
@@ -137,13 +173,14 @@ public class AccountController : Controller
         if (result.Succeeded)
         {
             TempData["Success"] = "Password added successfully.";
+            _logger.LogInformation($"Password added for user: {user.Id}");
             return RedirectToAction("Index", "Home");
         }
 
         TempData["Error"] = "Failed to add password.";
         return View(model);
     }
-    
+
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> HasPassword()
@@ -152,7 +189,7 @@ public class AccountController : Controller
         bool hasPassword = await _userManager.HasPasswordAsync(user);
         return Json(hasPassword);
     }
-    
+
     // GET: /Account/Logout
     [HttpGet]
     [Authorize]

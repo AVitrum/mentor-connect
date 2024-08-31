@@ -1,12 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using MentorConnect.Data.Entities;
+using MentorConnect.Web.Interfaces;
+using MentorConnect.Web.Services;
+using MentorConnect.Web.Services.Results;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 
 namespace MentorConnect.Web.ApiControllers;
 
@@ -14,99 +13,53 @@ namespace MentorConnect.Web.ApiControllers;
 [Route("server/[controller]")]
 public class GoogleAuthController : ControllerBase
 {
-    private readonly IConfiguration _configuration;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IGoogleAuthService _googleAuthService;
 
-    public GoogleAuthController(
-        IConfiguration configuration,
-        SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager)
+    public GoogleAuthController(IGoogleAuthService googleAuthService)
     {
-        _configuration = configuration;
-        _signInManager = signInManager;
-        _userManager = userManager;
+        _googleAuthService = googleAuthService;
     }
-
+    
     public IActionResult Index()
     {
         return new ChallengeResult(
             GoogleDefaults.AuthenticationScheme,
             new AuthenticationProperties
             {
-                RedirectUri = "/server/googleAuth/googleResponse"
+                RedirectUri = "/server/GoogleAuth/google-response"
             });
     }
 
-    //TODO: Move logic to a service
-    [HttpGet("googleResponse")]
+    [HttpGet("google-response")]
     public async Task<IActionResult> GoogleResponse()
     {
-        var authenticateResult = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
-        if (!authenticateResult.Succeeded)
+        AuthenticateResult authenticateResult = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+        GoogleAuthResult result = await _googleAuthService.HandleGoogleResponseAsync(authenticateResult);
+
+        if (!result.Success)
         {
-            return BadRequest();
+            return BadRequest(result.ErrorMessage);
         }
 
-        var email = authenticateResult.Principal.FindFirst(ClaimTypes.Email)?.Value;
-        if (email is null)
+        if (result.NeedsPassword)
         {
-            return BadRequest("Email claim not found");
-        }
-
-        var user = await _userManager.FindByEmailAsync(email);
-        if (user is null)
-        {
-            var newUser = new ApplicationUser
-            {
-                Email = email,
-                UserName = email,
-                EmailConfirmed = true,
-                NormalizedEmail = email.ToUpper(),
-                NormalizedUserName = email.ToUpper(),
-            };
-            
-            await _userManager.CreateAsync(newUser);
-            
-            user = await _userManager.FindByEmailAsync(email);
-            await _signInManager.SignInAsync(user!, isPersistent: false);
-            
             return RedirectToAction("AddPassword", "Account");
         }
 
-        if (user.PasswordHash is null)
-        {
-            await _signInManager.SignInAsync(user!, isPersistent: false);
-            return RedirectToAction("AddPassword", "Account");
-        }
-
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-            
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:IssuerSigningKey"] ?? string.Empty));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.Now.AddMinutes(30),
-            signingCredentials: creds);
-
-        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-        Response.Cookies.Append("jwt", tokenString, new CookieOptions
+        Response.Cookies.Append("jwt", result.Token!, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict
         });
-
-        await _signInManager.SignInAsync(user, isPersistent: false);
+        Console.WriteLine(result.Token);
         return RedirectToAction("Privacy", "Home");
+    }
+    
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpGet("test")]
+    public IActionResult Test()
+    {
+        return Ok("You are authorized");
     }
 }

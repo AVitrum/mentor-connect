@@ -31,7 +31,7 @@ public class Repository<T> : IRepository<T> where T : class
 
     public virtual async Task DeleteAsync(Guid id)
     {
-        var entity = await GetByIdAsync(id);
+        T entity = await GetByIdAsync(id);
         _dbSet.Remove(entity);
         await _dbContext.SaveChangesAsync();
     }

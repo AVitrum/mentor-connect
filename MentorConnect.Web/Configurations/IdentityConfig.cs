@@ -1,6 +1,7 @@
 using System.Text;
 using MentorConnect.Data.Contexts;
 using MentorConnect.Data.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
@@ -10,20 +11,16 @@ public static class IdentityConfig
 {
     public static void AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+        services.AddIdentity<ApplicationUser, IdentityRole>()
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
 
         services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-                options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
             .AddCookie()
-            .AddGoogle(options =>
-            {
-                options.ClientId = configuration["Authentication:Google:ClientId"] ?? string.Empty;
-                options.ClientSecret = configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
-                options.SaveTokens = true;
-            })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -37,6 +34,12 @@ public static class IdentityConfig
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(configuration["Jwt:IssuerSigningKey"] ?? string.Empty))
                 };
+            })
+            .AddGoogle(options =>
+            {
+                options.ClientId = configuration["Authentication:Google:ClientId"] ?? string.Empty;
+                options.ClientSecret = configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
+                options.SaveTokens = true;
             });
     }
 }
