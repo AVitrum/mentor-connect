@@ -80,8 +80,8 @@ public class GoogleAuthService : IGoogleAuthService
             NormalizedEmail = email.ToUpper(),
             NormalizedUserName = email.ToUpper(),
         };
-
         await _userManager.CreateAsync(newUser);
+        
         var user = await _userManager.FindByEmailAsync(email);
         await _signInManager.SignInAsync(user!, isPersistent: false);
         return GoogleAuthResult.PasswordNeeded();

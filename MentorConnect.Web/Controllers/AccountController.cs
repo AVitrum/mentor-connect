@@ -1,6 +1,7 @@
 using MentorConnect.Data.Entities;
 using MentorConnect.Shared.Enums;
 using MentorConnect.Shared.Exceptions;
+using MentorConnect.Web.Interfaces;
 using MentorConnect.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -11,18 +12,20 @@ namespace MentorConnect.Web.Controllers;
 
 public class AccountController : Controller
 {
+    private readonly IEmailService _emailService;
     private readonly ILogger<AccountController> _logger;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly RoleManager<IdentityRole> _roleManager;
 
     public AccountController(
+        IEmailService emailService,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         RoleManager<IdentityRole> roleManager,
-        IHttpContextAccessor httpContextAccessor,
         ILogger<AccountController> logger)
     {
+        _emailService = emailService;
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
@@ -80,13 +83,17 @@ public class AccountController : Controller
             TempData["Error"] = "Wrong email or password. Please try again.";
             return View(model);
         }
+        
+        if (user.EmailConfirmed is false)
+        {
+            return RedirectToAction("SendVerificationCode", new { email = user.Email });
+        }
 
         SignInResult result = await _signInManager.PasswordSignInAsync(
             user, model.Password, false, false);
         if (result.Succeeded)
         {
-            //TODO: Redirect to the user's profile
-            return RedirectToAction("Privacy", "Home");
+            return RedirectToAction("Profile", "Account");
         }
 
         TempData["Error"] = "Invalid login attempt.";
@@ -135,7 +142,64 @@ public class AccountController : Controller
 
         return RedirectToAction("Login", "Account");
     }
+    
+    // GET: /Account/SendVerificationCode
+    [HttpGet]
+    public async Task<IActionResult> SendVerificationCode(string email)
+    {
+        ApplicationUser? user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            TempData["Error"] = "User not found.";
+            return RedirectToAction("Index", "Home");
+        }
 
+        string code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+        if (user.Email is not null)
+        {
+            await _emailService.SendEmailAsync(user.Email, "Verification Code", code);
+            TempData["Success"] = "Verification code sent successfully.";
+            
+            return RedirectToAction("VerifyEmail", new { email = user.Email });
+        }
+        
+        TempData["Error"] = "Failed to send verification code.";
+        return RedirectToAction("Index", "Home");
+    }
+    
+    // GET: /Account/VerifyEmail
+    [HttpGet]
+    public IActionResult VerifyEmail(string email)
+    {
+        VerifyEmailViewModel response = new VerifyEmailViewModel { Email = email };
+        return View(response);
+    }
+    
+    // POST: /Account/VerifyEmail
+    [HttpPost]
+    public async Task<IActionResult> VerifyEmail(string email, string code)
+    {
+        ApplicationUser? user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            TempData["Error"] = "User not found.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        IdentityResult result = await _userManager.ConfirmEmailAsync(user, code);
+        if (result.Succeeded)
+        {
+            TempData["Success"] = "Email verified successfully.";
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            
+            return RedirectToAction("Privacy", "Home");
+        }
+
+        TempData["Error"] = "Failed to verify email.";
+        return RedirectToAction("Index", "Home");
+    }
+    
     // GET: /Account/ChangePassword
     [Authorize]
     public async Task<IActionResult> AddPassword()
@@ -186,6 +250,11 @@ public class AccountController : Controller
     public async Task<IActionResult> HasPassword()
     {
         ApplicationUser? user = await _userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Json(false);
+        }
+        
         bool hasPassword = await _userManager.HasPasswordAsync(user);
         return Json(hasPassword);
     }

@@ -41,7 +41,6 @@ public class ExceptionHandlingMiddleware : IExceptionHandler
     {
         return exception switch
         {
-            
             _ => (500, "An error occurred while processing your request")
         };
     }
