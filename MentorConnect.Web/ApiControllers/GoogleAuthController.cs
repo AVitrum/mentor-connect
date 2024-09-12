@@ -1,5 +1,4 @@
 using MentorConnect.Web.Interfaces;
-using MentorConnect.Web.Services;
 using MentorConnect.Web.Services.Results;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -31,6 +30,9 @@ public class GoogleAuthController : ControllerBase
     }
 
     [HttpGet("google-response")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GoogleResponse()
     {
         AuthenticateResult authenticateResult = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
@@ -38,7 +40,7 @@ public class GoogleAuthController : ControllerBase
 
         if (!result.Success)
         {
-            return BadRequest(result.ErrorMessage);
+            return Unauthorized(result.ErrorMessage);
         }
 
         if (result.NeedsPassword)
@@ -52,12 +54,12 @@ public class GoogleAuthController : ControllerBase
             Secure = true,
             SameSite = SameSiteMode.Strict
         });
-        Console.WriteLine(result.Token);
         return RedirectToAction("Privacy", "Home");
     }
     
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("test")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Test()
     {
         return Ok("You are authorized");

@@ -36,13 +36,13 @@ public class GoogleAuthService : IGoogleAuthService
             return GoogleAuthResult.Failure("Authentication failed");
         }
 
-        var email = GetEmailFromClaims(authenticateResult);
+        string? email = GetEmailFromClaims(authenticateResult);
         if (email is null)
         {
             return GoogleAuthResult.Failure("Email claim not found");
         }
 
-        var user = await GetUserByEmailAsync(email);
+        ApplicationUser? user = await GetUserByEmailAsync(email);
         if (user is null)
         {
             return await HandleNewUserAsync(email);
@@ -53,7 +53,7 @@ public class GoogleAuthService : IGoogleAuthService
             return await HandleUserWithoutPasswordAsync(user);
         }
 
-        var token = GenerateJwtToken(user, email);
+        string token = GenerateJwtToken(user, email);
         await _signInManager.SignInAsync(user, isPersistent: false);
         
         return GoogleAuthResult.SuccessResult(token);
@@ -72,7 +72,7 @@ public class GoogleAuthService : IGoogleAuthService
     private async Task<GoogleAuthResult> HandleNewUserAsync(string email)
     {
         _logger.LogInformation("User not found, creating new user");
-        var newUser = new ApplicationUser
+        ApplicationUser newUser = new()
         {
             Email = email,
             UserName = email,
@@ -82,7 +82,7 @@ public class GoogleAuthService : IGoogleAuthService
         };
         await _userManager.CreateAsync(newUser);
         
-        var user = await _userManager.FindByEmailAsync(email);
+        ApplicationUser? user = await _userManager.FindByEmailAsync(email);
         await _signInManager.SignInAsync(user!, isPersistent: false);
         return GoogleAuthResult.PasswordNeeded();
     }
@@ -96,17 +96,17 @@ public class GoogleAuthService : IGoogleAuthService
 
     private string GenerateJwtToken(ApplicationUser user, string email)
     {
-        var claims = new[]
-        {
+        Claim[] claims =
+        [
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        ];
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:IssuerSigningKey"] ?? string.Empty));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(_configuration["Jwt:IssuerSigningKey"] ?? string.Empty));
+        SigningCredentials credentials = new(key, SecurityAlgorithms.HmacSha256);
 
-        var token = new JwtSecurityToken(
+        JwtSecurityToken token = new(
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],
             claims: claims,

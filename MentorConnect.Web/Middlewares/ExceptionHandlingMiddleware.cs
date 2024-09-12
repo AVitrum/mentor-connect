@@ -14,7 +14,7 @@ public class ExceptionHandlingMiddleware : IExceptionHandler
     
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+        string traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
         
         _logger.LogError(
             exception,
@@ -23,7 +23,7 @@ public class ExceptionHandlingMiddleware : IExceptionHandler
             traceId
         );
 
-        var (statusCode, title) = MapException(exception);
+        (int statusCode, string title) = MapException(exception);
 
         await Results.Problem(
             title: title,

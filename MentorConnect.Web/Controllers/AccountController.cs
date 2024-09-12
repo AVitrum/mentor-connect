@@ -56,7 +56,7 @@ public class AccountController : Controller
     // GET: /Account/Login
     public IActionResult Login()
     {
-        LoginViewModel response = new LoginViewModel();
+        LoginViewModel response = new();
         return View(response);
     }
 
@@ -103,7 +103,7 @@ public class AccountController : Controller
     // GET: /Account/Register
     public IActionResult Register()
     {
-        RegisterViewModel response = new RegisterViewModel();
+        RegisterViewModel response = new();
         return View(response);
     }
 
@@ -172,7 +172,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult VerifyEmail(string email)
     {
-        VerifyEmailViewModel response = new VerifyEmailViewModel { Email = email };
+        VerifyEmailViewModel response = new() { Email = email };
         return View(response);
     }
     
@@ -212,7 +212,7 @@ public class AccountController : Controller
         }
 
         _logger.LogInformation($"User: {user.Id} found");
-        ChangePasswordViewModel response = new ChangePasswordViewModel { AppUserId = user.Id };
+        ChangePasswordViewModel response = new() { AppUserId = user.Id };
         return View(response);
     }
 
