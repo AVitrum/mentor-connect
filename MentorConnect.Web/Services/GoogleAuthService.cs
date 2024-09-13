@@ -103,14 +103,12 @@ public class GoogleAuthService : IGoogleAuthService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         ];
 
-        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(_configuration["Jwt:IssuerSigningKey"] ?? string.Empty));
-        SigningCredentials credentials = new(key, SecurityAlgorithms.HmacSha256);
+        SymmetricSecurityKey key =
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:IssuerSigningKey"] ?? string.Empty));
+        SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        JwtSecurityToken token = new(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.Now.AddMinutes(30),
+        JwtSecurityToken token = new JwtSecurityToken(issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"], claims: claims, expires: DateTime.Now.AddMinutes(30),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

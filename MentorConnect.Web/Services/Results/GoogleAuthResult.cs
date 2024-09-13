@@ -15,7 +15,10 @@ public class GoogleAuthResult
         ErrorMessage = errorMessage;
     }
 
-    public static GoogleAuthResult SuccessResult(string token) => new(true, token, false, null);
-    public static GoogleAuthResult PasswordNeeded() => new(true, null, true, null);
-    public static GoogleAuthResult Failure(string errorMessage) => new(false, null, false, errorMessage);
+    public static GoogleAuthResult SuccessResult(string token) => 
+        new GoogleAuthResult(true, token, false, null);
+    public static GoogleAuthResult PasswordNeeded() => 
+        new GoogleAuthResult(true, null, true, null);
+    public static GoogleAuthResult Failure(string errorMessage) => 
+        new GoogleAuthResult(false, null, false, errorMessage);
 }

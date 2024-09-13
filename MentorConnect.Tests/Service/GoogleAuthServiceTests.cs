@@ -26,12 +26,12 @@ namespace MentorConnect.Tests.Service
             _mockConfiguration = new Mock<IConfiguration>();
             _mockLogger = new Mock<ILogger<GoogleAuthService>>();
     
-            var userStoreMock = Mock.Of<IUserStore<ApplicationUser>>();
+            IUserStore<ApplicationUser> userStoreMock = Mock.Of<IUserStore<ApplicationUser>>();
             _mockUserManager = new Mock<UserManager<ApplicationUser>>(
                 userStoreMock, null, null, null, null, null, null, null, null);
     
-            var contextAccessorMock = Mock.Of<IHttpContextAccessor>();
-            var userClaimsPrincipalFactoryMock =
+            IHttpContextAccessor contextAccessorMock = Mock.Of<IHttpContextAccessor>();
+            IUserClaimsPrincipalFactory<ApplicationUser> userClaimsPrincipalFactoryMock =
                 Mock.Of<IUserClaimsPrincipalFactory<ApplicationUser>>();
             _mockSignInManager = new Mock<SignInManager<ApplicationUser>>(
                 _mockUserManager.Object, contextAccessorMock, userClaimsPrincipalFactoryMock, null, null, null, null);
@@ -64,7 +64,7 @@ namespace MentorConnect.Tests.Service
         public async Task HandleGoogleResponseAsync_EmailClaimNotFound_ReturnsFailure()
         {
             // Arrange
-            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
             AuthenticateResult authenticateResult = AuthenticateResult.Success(new AuthenticationTicket(claimsPrincipal, "Google"));
 
             // Act
@@ -83,7 +83,7 @@ namespace MentorConnect.Tests.Service
         {
             // Arrange
             const string email = "test@example.com";
-            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.Email, email) }));
+            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Email, email) }));
             AuthenticateResult authenticateResult = 
                 AuthenticateResult.Success(new AuthenticationTicket(claimsPrincipal, "Google"));
 
@@ -107,10 +107,13 @@ namespace MentorConnect.Tests.Service
         {
             // Arrange
             const string email = "test@example.com";
-            var user = new ApplicationUser { Email = email };
-            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.Email, email) }));
+            ApplicationUser user = new ApplicationUser { Email = email };
+            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Email, email)
+            }));
             AuthenticateResult authenticateResult = AuthenticateResult.Success(new AuthenticationTicket(claimsPrincipal, "Google"));
-
+            
             _mockUserManager.Setup(um => um.FindByEmailAsync(email)).ReturnsAsync(user);
 
             // Act
@@ -129,8 +132,11 @@ namespace MentorConnect.Tests.Service
         {
             // Arrange
             const string email = "test@example.com";
-            var user = new ApplicationUser { Email = email, PasswordHash = "hashedPassword" };
-            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.Email, email) }));
+            ApplicationUser user = new ApplicationUser { Email = email, PasswordHash = "hashedPassword" };
+            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Email, email)
+            }));
             AuthenticateResult authenticateResult = AuthenticateResult.Success(new AuthenticationTicket(claimsPrincipal, "Google"));
 
             _mockUserManager.Setup(um => um.FindByEmailAsync(email)).ReturnsAsync(user);

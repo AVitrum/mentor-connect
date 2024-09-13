@@ -17,14 +17,14 @@ public class EmailService : IEmailService
     
     public Task SendEmailAsync(string email, string subject, string message)
     {
-        SmtpClient client = new("smtp.gmail.com")
+        SmtpClient client = new SmtpClient("smtp.gmail.com")
         {
             Port = 587,
             EnableSsl = true,
             Credentials = new NetworkCredential(_mail, _password)
         };
 
-        MailMessage mailMessage = new()
+        MailMessage mailMessage = new MailMessage
         {
             From = new MailAddress(_mail),
             To = { email },

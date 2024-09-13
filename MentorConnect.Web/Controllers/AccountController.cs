@@ -56,7 +56,7 @@ public class AccountController : Controller
     // GET: /Account/Login
     public IActionResult Login()
     {
-        LoginViewModel response = new();
+        LoginViewModel response = new LoginViewModel();
         return View(response);
     }
 
@@ -103,7 +103,7 @@ public class AccountController : Controller
     // GET: /Account/Register
     public IActionResult Register()
     {
-        RegisterViewModel response = new();
+        RegisterViewModel response = new RegisterViewModel();
         return View(response);
     }
 
@@ -123,23 +123,26 @@ public class AccountController : Controller
             return View(model);
         }
 
-        user = new ApplicationUser
+        ApplicationUser newUser = new ApplicationUser
         {
             Email = model.Email,
             UserName = model.Email
         };
-        IdentityResult creationResult = await _userManager.CreateAsync(user, model.Password);
-        if (creationResult.Succeeded)
+        
+        IdentityResult creationResult = await _userManager.CreateAsync(newUser, model.Password);
+        if (!creationResult.Succeeded)
         {
-            bool roleExists = await _roleManager.RoleExistsAsync(UserRoles.User);
-            if (!roleExists)
-            {
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
-            }
-
-            await _userManager.AddToRoleAsync(user, UserRoles.User);
+            return RedirectToAction("Login", "Account");
         }
-
+        
+        bool roleExists = await _roleManager.RoleExistsAsync(UserRoles.User);
+        if (!roleExists)
+        {
+            await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+        }
+        await _userManager.AddToRoleAsync(newUser, UserRoles.User);
+        
+        TempData["Success"] = "Account created successfully.";
         return RedirectToAction("Login", "Account");
     }
     
@@ -172,7 +175,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult VerifyEmail(string email)
     {
-        VerifyEmailViewModel response = new() { Email = email };
+        VerifyEmailViewModel response = new VerifyEmailViewModel { Email = email };
         return View(response);
     }
     
@@ -212,7 +215,7 @@ public class AccountController : Controller
         }
 
         _logger.LogInformation($"User: {user.Id} found");
-        ChangePasswordViewModel response = new() { AppUserId = user.Id };
+        ChangePasswordViewModel response = new ChangePasswordViewModel { AppUserId = user.Id };
         return View(response);
     }
 
