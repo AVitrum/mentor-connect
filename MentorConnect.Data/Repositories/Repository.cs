@@ -9,8 +9,8 @@ public class Repository<T> : IRepository<T> where T : class
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly DbSet<T> _dbSet;
-    
-    public Repository(ApplicationDbContext dbContext, DbSet<T> dbSet)
+
+    protected Repository(ApplicationDbContext dbContext, DbSet<T> dbSet)
     {
         _dbContext = dbContext;
         _dbSet = dbSet;

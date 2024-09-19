@@ -1,4 +1,5 @@
 using MentorConnect.Data.Interfaces;
+using MentorConnect.Data.Repositories;
 using MentorConnect.Web.Interfaces;
 using MentorConnect.Web.Middlewares;
 using MentorConnect.Web.Services;
@@ -12,7 +13,8 @@ public static class DependencyInjectionExtensions
 {
     public static void RegisterRepositories(this IServiceCollection services)
     {
-        
+        services.AddScoped<IChatRepository, ChatRepository>().AddProblemDetails().AddExceptionHandler<ExceptionHandlingMiddleware>();
+        services.AddScoped<IMessageRepository, MessageRepository>().AddProblemDetails().AddExceptionHandler<ExceptionHandlingMiddleware>();
     }
     
     public static void RegisterServices(this IServiceCollection services)

@@ -1,0 +1,66 @@
+@model MentorConnect.Web.ViewModels.ChatViewModel
+
+@{
+ViewData["Title"] = "Chat";
+}
+
+<div class="container mt-4">
+    <h2 class="text-center">Chat</h2>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <input asp-for="ReceiverEmail" class="form-control" placeholder="Receiver's email" />
+            </div>
+            <div class="form-group">
+                <button id="loadChatButton" class="btn btn-primary btn-block">Load Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div id="messagesList" class="border rounded p-3" style="height: 300px; overflow-y: scroll;"></div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-10">
+            <input asp-for="Message" class="form-control" placeholder="Your message" />
+        </div>
+        <div class="col-md-2">
+            <button id="sendButton" class="btn btn-success btn-block">Send</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.11/signalr.min.js"></script>
+<script type="text/javascript">
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/chatHub")
+        .build();
+
+    connection.on("ReceiveMessage", (user, message) => {
+        const msg = document.createElement("div");
+        msg.classList.add("alert", "alert-secondary");
+        msg.textContent = `${user}: ${message}`;
+        document.getElementById("messagesList").appendChild(msg);
+    });
+
+    connection.start().catch(err => console.error(err.toString()));
+
+    document.getElementById("loadChatButton").addEventListener("click", event => {
+        const receiverEmail = document.getElementById("ReceiverEmail").value;
+        connection.invoke("LoadChat", receiverEmail).catch(err => console.error(err.toString()));
+        event.preventDefault();
+    });
+
+    document.getElementById("sendButton").addEventListener("click", event => {
+        const receiverEmail = document.getElementById("ReceiverEmail").value;
+        const message = document.getElementById("Message").value;
+        connection.invoke("SendMessage", receiverEmail, message).catch(err => console.error(err.toString()));
+        event.preventDefault();
+    });
+</script>
+}

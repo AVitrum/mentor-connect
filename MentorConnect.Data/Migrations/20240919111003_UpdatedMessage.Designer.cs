@@ -3,6 +3,7 @@ using System;
 using MentorConnect.Data.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MentorConnect.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240919111003_UpdatedMessage")]
+    partial class UpdatedMessage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -92,19 +95,23 @@ namespace MentorConnect.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("User1Id")
-                        .IsRequired()
+                    b.Property<Guid>("User1Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("User1Id1")
                         .HasColumnType("text");
 
-                    b.Property<string>("User2Id")
-                        .IsRequired()
+                    b.Property<Guid>("User2Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("User2Id1")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("User1Id");
+                    b.HasIndex("User1Id1");
 
-                    b.HasIndex("User2Id");
+                    b.HasIndex("User2Id1");
 
                     b.ToTable("Chats");
                 });
@@ -122,12 +129,16 @@ namespace MentorConnect.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ReceiverId")
-                        .IsRequired()
+                    b.Property<Guid>("ReceiverId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReceiverId1")
                         .HasColumnType("text");
 
-                    b.Property<string>("SenderId")
-                        .IsRequired()
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SenderId1")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("SentAt")
@@ -137,9 +148,9 @@ namespace MentorConnect.Data.Migrations
 
                     b.HasIndex("ChatId");
 
-                    b.HasIndex("ReceiverId");
+                    b.HasIndex("ReceiverId1");
 
-                    b.HasIndex("SenderId");
+                    b.HasIndex("SenderId1");
 
                     b.ToTable("Messages");
                 });
@@ -280,15 +291,11 @@ namespace MentorConnect.Data.Migrations
                 {
                     b.HasOne("MentorConnect.Data.Entities.ApplicationUser", "User1")
                         .WithMany()
-                        .HasForeignKey("User1Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("User1Id1");
 
                     b.HasOne("MentorConnect.Data.Entities.ApplicationUser", "User2")
                         .WithMany()
-                        .HasForeignKey("User2Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("User2Id1");
 
                     b.Navigation("User1");
 
@@ -305,15 +312,11 @@ namespace MentorConnect.Data.Migrations
 
                     b.HasOne("MentorConnect.Data.Entities.ApplicationUser", "Receiver")
                         .WithMany()
-                        .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("ReceiverId1");
 
                     b.HasOne("MentorConnect.Data.Entities.ApplicationUser", "Sender")
                         .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("SenderId1");
 
                     b.Navigation("Chat");
 
