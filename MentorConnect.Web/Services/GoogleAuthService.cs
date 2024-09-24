@@ -72,7 +72,7 @@ public class GoogleAuthService : IGoogleAuthService
     private async Task<GoogleAuthResult> HandleNewUserAsync(string email)
     {
         _logger.LogInformation("User not found, creating new user");
-        ApplicationUser newUser = new()
+        var newUser = new ApplicationUser
         {
             Email = email,
             UserName = email,
@@ -103,11 +103,11 @@ public class GoogleAuthService : IGoogleAuthService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         ];
 
-        SymmetricSecurityKey key =
+        var key =
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:IssuerSigningKey"] ?? string.Empty));
-        SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        JwtSecurityToken token = new JwtSecurityToken(issuer: _configuration["Jwt:Issuer"],
+        var token = new JwtSecurityToken(issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"], claims: claims, expires: DateTime.Now.AddMinutes(30),
             signingCredentials: credentials);
 

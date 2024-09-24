@@ -1,0 +1,102 @@
+@page "/chat"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
+
+@code {
+    private HubConnection? _hubConnection;
+    private string _receiverEmail = string.Empty;
+    private string _message = string.Empty;
+    private readonly List<ChatViewModel> _messages = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("https://localhost:7149/chatHub"))
+            .Build();
+
+        _hubConnection.On<ChatViewModel>("ReceiveMessage", (model) =>
+        {
+            var formattedDate = model.SentAt.ToLocalTime().ToString("g");
+            var msg = $"{model.Sender}: {model.Content} ({formattedDate})";
+            _messages.Add(new ChatViewModel{ Sender = model.Sender, Content = msg, SentAt = model.SentAt });
+            InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+
+    private async Task LoadChat()
+    {
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.InvokeAsync("LoadChat", _receiverEmail);
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_message)) return;
+
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.InvokeAsync("SendMessage", _receiverEmail, _message);
+            _message = string.Empty;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
+    }
+    
+
+    public class ChatViewModel
+    {
+        public required string Sender { get; set; }
+        public required string Content { get; set; }
+        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+    }
+}
+
+<div class="container mt-4">
+    <h2 class="text-center text-primary">Chat</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="input-group">
+                <input @bind="_receiverEmail" class="form-control" placeholder="Receiver's email" />
+                <div class="input-group-append">
+                    <button @onclick="LoadChat" class="btn btn-primary">Load Chat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div id="messagesList" class="card" style="height: 300px; overflow-y: scroll;">
+                <div class="card-body">
+                    @foreach (ChatViewModel message in _messages)
+                    {
+                        <div class="alert alert-secondary mt-2 position-relative">
+                            @message.Content
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-10">
+            <input @bind="_message" class="form-control" placeholder="Your message" @onkeypress="@(async (e) => { if (e.Key == "Enter") await SendMessage(); })" />
+        </div>
+        <div class="col-md-2">
+            <button @onclick="SendMessage" class="btn btn-success btn-block">Send</button>
+        </div>
+    </div>
+</div>

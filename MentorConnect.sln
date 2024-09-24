@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MentorConnect.Data", "Mento
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MentorConnect.Tests", "MentorConnect.Tests\MentorConnect.Tests.csproj", "{F3717D13-7AD3-4A90-A8C9-E84D71D5DECF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MentorConnect.Client", "MentorConnect.Client\MentorConnect.Client.csproj", "{4EB863DA-E285-455C-B4B2-0E16AA4C5047}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,5 +37,9 @@ Global
 		{F3717D13-7AD3-4A90-A8C9-E84D71D5DECF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3717D13-7AD3-4A90-A8C9-E84D71D5DECF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F3717D13-7AD3-4A90-A8C9-E84D71D5DECF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EB863DA-E285-455C-B4B2-0E16AA4C5047}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EB863DA-E285-455C-B4B2-0E16AA4C5047}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EB863DA-E285-455C-B4B2-0E16AA4C5047}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EB863DA-E285-455C-B4B2-0E16AA4C5047}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

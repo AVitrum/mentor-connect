@@ -20,15 +20,23 @@ public class ChatRepository : Repository<Chat>, IChatRepository
     {
         Chat? chat = await _dbContext.Chats
             .AsNoTracking()
-            .Include(c => c.Messages.OrderBy(m => m.SentAt))
-            .ThenInclude(m => m.Sender)
             .Include(c => c.Messages)
-            .ThenInclude(m => m.Receiver)
-            .AsSplitQuery()
-            .FirstOrDefaultAsync(c => (c.User1Id == senderId && c.User2Id == receiverId) ||
-                                      (c.User1Id == receiverId && c.User2Id == senderId));
+                .ThenInclude(m => m.Sender)
+            .Include(c => c.Messages)
+                .ThenInclude(m => m.Receiver)
+            .FirstOrDefaultAsync(c => 
+                (c.User1Id == senderId && c.User2Id == receiverId) ||
+                (c.User1Id == receiverId && c.User2Id == senderId));
+
+        if (chat != null)
+        {
+            chat.Messages = chat.Messages.OrderBy(m => m.SentAt).ToList();
+        }
+
         return chat;
     }
+
+
 
     public async Task<IEnumerable<Chat>> GetChatsAsync(string userId)
     {

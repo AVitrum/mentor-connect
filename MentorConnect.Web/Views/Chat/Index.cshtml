@@ -5,31 +5,35 @@ ViewData["Title"] = "Chat";
 }
 
 <div class="container mt-4">
-    <h2 class="text-center">Chat</h2>
+    <h2 class="text-center text-primary">Chat</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="input-group">
+                <input asp-for="ReceiverEmail" class="form-control" placeholder="Receiver's email" />
+                <div class="input-group-append">
+                    <button id="loadChatButton" class="btn btn-primary">Load Chat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div id="messagesList" class="card" style="height: 300px; overflow-y: scroll;">
+                <div class="card-body">
+                    <!-- Messages will be appended here -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="row">
-        <div class="col-md-12">
-            <div class="form-group">
-                <input asp-for="ReceiverEmail" class="form-control" placeholder="Receiver's email" />
-            </div>
-            <div class="form-group">
-                <button id="loadChatButton" class="btn btn-primary btn-block">Load Chat</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <div id="messagesList" class="border rounded p-3" style="height: 300px; overflow-y: scroll;"></div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
         <div class="col-md-10">
             <input asp-for="Message" class="form-control" placeholder="Your message" />
         </div>
         <div class="col-md-2">
-            <button id="sendButton" class="btn btn-success btn-block">Send</button>
+            <button id="sendButton" type="submit" class="btn btn-success btn-block">Send</button>
         </div>
     </div>
 </div>
@@ -41,26 +45,57 @@ ViewData["Title"] = "Chat";
         .withUrl("/chatHub")
         .build();
 
-    connection.on("ReceiveMessage", (user, message) => {
+    function scrollToBottom() {
+        const messagesList = document.querySelector("#messagesList .card-body");
+        messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    connection.on("ReceiveMessage", (user, message, sentAt) => {
         const msg = document.createElement("div");
-        msg.classList.add("alert", "alert-secondary");
+        msg.classList.add("alert", "alert-secondary", "mt-2", "position-relative");
+
+        const date = new Date(sentAt);
+        const formattedDate = date.toLocaleString();
+
+        const dateSpan = document.createElement("span");
+        dateSpan.classList.add("position-absolute", "bottom-0", "end-0", "text-muted", "small");
+        dateSpan.textContent = formattedDate;
+
         msg.textContent = `${user}: ${message}`;
-        document.getElementById("messagesList").appendChild(msg);
+        msg.appendChild(dateSpan);
+        const messagesList = document.querySelector("#messagesList .card-body");
+        messagesList.appendChild(msg);
+        scrollToBottom();
     });
 
     connection.start().catch(err => console.error(err.toString()));
 
     document.getElementById("loadChatButton").addEventListener("click", event => {
         const receiverEmail = document.getElementById("ReceiverEmail").value;
-        connection.invoke("LoadChat", receiverEmail).catch(err => console.error(err.toString()));
+        connection.invoke("LoadChat", receiverEmail).then(() => {
+            scrollToBottom();
+        }).catch(err => console.error(err.toString()));
         event.preventDefault();
     });
 
     document.getElementById("sendButton").addEventListener("click", event => {
-        const receiverEmail = document.getElementById("ReceiverEmail").value;
-        const message = document.getElementById("Message").value;
-        connection.invoke("SendMessage", receiverEmail, message).catch(err => console.error(err.toString()));
+        sendMessage();
         event.preventDefault();
     });
+
+    document.getElementById("Message").addEventListener("keypress", event => {
+        if (event.key === "Enter") {
+            sendMessage();
+            event.preventDefault();
+        }
+    });
+
+    function sendMessage() {
+        const receiverEmail = document.getElementById("ReceiverEmail").value;
+        const message = document.getElementById("Message").value;
+        if (message.trim() === "") return; 
+        connection.invoke("SendMessage", receiverEmail, message).catch(err => console.error(err.toString()));
+        document.getElementById("Message").value = '';
+    }
 </script>
 }
